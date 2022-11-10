@@ -73,8 +73,11 @@ class BaselineGruModel(nn.Module):
         # generate the x_time feature for output
         x_time = categorical_features[:, :, 0]
         x_time_list = [x_time]
-        for i in range(output_len // self.input_len + 1):
-            x_time_list.append(x_time_list[-1] + self.input_len)
+        x_time_list.extend(
+            x_time_list[-1] + self.input_len
+            for _ in range(output_len // self.input_len + 1)
+        )
+
         x_time = torch.cat(tuple(x_time_list), 1)[:, :self.input_len + output_len] % 144
         x_time_emb = self.time_embedding(x_time)  # [batch, input_len + output_len, time_emb_size]
 

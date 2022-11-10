@@ -80,16 +80,14 @@ def get_train_data_part(settings):
 def get_test_data(settings):
     print("Loading test data")
     df = pd.read_csv(settings['path_to_test_x'])
-    df_list = []
-    for i in range(settings['capacity']):
-        tid = i + 1
-        df_list.append(df[df.TurbID == tid])
+    df_list = [df[df.TurbID == i + 1] for i in range(settings['capacity'])]
     df = add_features(pd.concat(df_list))
     cols = [c for c in df.columns if c not in settings['remove_features']]
     df = df[cols]
-    df_list = []
-    for i in range(settings['capacity']):
-        tid = i + 1
-        df_list.append(df[df.TurbID == tid][-int(settings["input_len"]):])
+    df_list = [
+        df[df.TurbID == i + 1][-int(settings["input_len"]) :]
+        for i in range(settings['capacity'])
+    ]
+
     print("Loading test data finish")
     return df_list

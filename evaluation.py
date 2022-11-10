@@ -61,11 +61,10 @@ class Loader(object):
         try:
             items = os.path.split(path)
             sys.path.append(os.path.join(*items[:-1]))
-            ip_module = __import__(items[-1][:-3])
-            return ip_module
+            return __import__(items[-1][:-3])
         except Exception as error:
             traceback.print_exc()
-            raise LoaderError("IMPORT ERROR: {}, load module [path: {}]!".format(error, path))
+            raise LoaderError(f"IMPORT ERROR: {error}, load module [path: {path}]!")
 
 
 def performance(settings, idx, prediction, ground_truth, ground_truth_df):
@@ -86,8 +85,10 @@ def performance(settings, idx, prediction, ground_truth, ground_truth_df):
     # A convenient customized relative metric can be adopted
     # to evaluate the 'accuracy'-like performance of developed model for Wind Power forecasting problem
     if overall_latest_rmse < 0:
-        raise EvaluationError("The RMSE of the last 24 hours is negative ({}) in the {}-th prediction"
-                              "".format(overall_latest_rmse, idx))
+        raise EvaluationError(
+            f"The RMSE of the last 24 hours is negative ({overall_latest_rmse}) in the {idx}-th prediction"
+        )
+
     acc = 1 - overall_latest_rmse / settings["capacity"]
     return overall_mae, overall_rmse, acc
 
@@ -129,7 +130,7 @@ def exec_predict_and_test(envs, test_file, forecast_module, flag='predict'):
             assert len(items) == 1, "More than one test files encountered in the tmp dir! "
             assert str(items[0]).endswith('.csv'), "Test data does not end with csv! "
             path_to_test_file = os.path.join(tmp_dir, items[0])
-            if 'predict' == flag:
+            if flag == 'predict':
                 envs["path_to_test_x"] = path_to_test_file
                 return {
                     "prediction": forecast_module.forecast(envs)
@@ -137,9 +138,11 @@ def exec_predict_and_test(envs, test_file, forecast_module, flag='predict'):
             elif flag == 'test':
                 test_data = TestData(path_to_data=path_to_test_file, start_col=envs["start_col"])
                 turbines, raw_turbines = test_data.get_all_turbines()
-                test_ys = []
-                for turbine in turbines:
-                    test_ys.append(turbine[:envs["output_len"], -envs["out_var"]:])
+                test_ys = [
+                    turbine[: envs["output_len"], -envs["out_var"] :]
+                    for turbine in turbines
+                ]
+
                 return {
                     "ground_truth_y": np.array(test_ys), "ground_truth_df": raw_turbines
                 }
@@ -164,7 +167,7 @@ def predict_and_test(envs, path_to_data, forecast_module, idx, flag='predict'):
         with zipfile.ZipFile(path_to_data) as test_f:
             test_f.extractall(path=tmp_dir)
             items = os.listdir(tmp_dir)
-            assert 1 == len(items), "More than one items in {}".format(tmp_dir)
+            assert 1 == len(items), f"More than one items in {tmp_dir}"
             tmp_dir = os.path.join(tmp_dir, items[0])
             items = os.listdir(tmp_dir)
             files = sorted(items)
@@ -196,16 +199,19 @@ def evaluate(path_to_src_dir):
 
     for req_key in REQUIRED_ENV_VARS:
         if req_key not in envs:
-            raise EvaluationError("Key error: '{}'. The variable {} "
-                                  "is missing in the prepared experimental settings! ".format(req_key, req_key))
+            raise EvaluationError(
+                f"Key error: '{req_key}'. The variable {req_key} is missing in the prepared experimental settings! "
+            )
+
 
     if "is_debug" not in envs:
         envs["is_debug"] = False
 
     if envs["framework"] not in SUPPORTED_FRAMEWORKS:
-        raise EvaluationError("Unsupported machine learning framework: {}. "
-                              "The supported frameworks are 'base', 'paddlepaddle', 'pytorch', "
-                              "and 'tensorflow'".format(envs["framework"]))
+        raise EvaluationError(
+            f"""Unsupported machine learning framework: {envs["framework"]}. The supported frameworks are 'base', 'paddlepaddle', 'pytorch', and 'tensorflow'"""
+        )
+
 
     envs["data_path"] = DATA_DIR
     envs["filename"] = "wtbdata_245days.csv"
@@ -220,7 +226,10 @@ def evaluate(path_to_src_dir):
 
     if envs["is_debug"]:
         end_load_test_set_time = time.time()
-        print("Load test_set (test_ys) in {} secs".format(end_load_test_set_time - start_test_time))
+        print(
+            f"Load test_set (test_ys) in {end_load_test_set_time - start_test_time} secs"
+        )
+
         start_test_time = end_load_test_set_time
 
     maes, rmses, accuracies = [], [], []
@@ -233,8 +242,10 @@ def evaluate(path_to_src_dir):
         prediction = pred_res["prediction"]
         if envs["is_debug"]:
             end_forecast_time = time.time()
-            print("\nElapsed time for {}-th prediction is: "
-                  "{} secs \n".format(i, end_forecast_time - start_forecast_time))
+            print(
+                f"\nElapsed time for {i}-th prediction is: {end_forecast_time - start_forecast_time} secs \n"
+            )
+
             start_forecast_time = end_forecast_time
         gt_res = predict_and_test(envs, TAR_DIR, forecast_module, i, flag='test')
         gt_ys = gt_res["ground_truth_y"]
@@ -251,8 +262,10 @@ def evaluate(path_to_src_dir):
         if tmp_acc <= 0:
             # Accuracy is lower than Zero, which means that the RMSE of this prediction is too large,
             # which also indicates that the performance is probably poor and not robust
-            print('\n\tThe {}-th prediction -- '
-                  'RMSE: {}, MAE: {}, and Accuracy: {}'.format(i, tmp_mae, tmp_rmse, tmp_acc))
+            print(
+                f'\n\tThe {i}-th prediction -- RMSE: {tmp_mae}, MAE: {tmp_rmse}, and Accuracy: {tmp_acc}'
+            )
+
             raise EvaluationError("Accuracy ({}) is lower than Zero, which means that "
                                   "the RMSE (in latest 24 hours) of the {:04d}-th prediction "
                                   "is too large!".format(tmp_acc, i))
@@ -286,20 +299,26 @@ def evaluate(path_to_src_dir):
         avg_mae = np.array(maes).mean()
         avg_rmse = np.array(rmses).mean()
         total_score = (avg_mae + avg_rmse) / 2
-        print('\n --- Final MAE: {}, RMSE: {} ---'.format(avg_mae, avg_rmse))
-        print('--- Final Score --- \n\t{}'.format(total_score))
+        print(f'\n --- Final MAE: {avg_mae}, RMSE: {avg_rmse} ---')
+        print(f'--- Final Score --- \n\t{total_score}')
 
     if envs["is_debug"]:
-        print("\nElapsed time for prediction is {} secs\n".format(end_forecast_time - start_test_time))
+        print(
+            f"\nElapsed time for prediction is {end_forecast_time - start_test_time} secs\n"
+        )
+
         end_test_time = time.time()
-        print("\nTotal time for evaluation is {} secs\n".format(end_test_time - start_test_time))
+        print(
+            f"\nTotal time for evaluation is {end_test_time - start_test_time} secs\n"
+        )
+
 
     if total_score > 0:
         return {
             "score": -1. * total_score, "ML-framework": envs["framework"]
         }
     else:
-        raise EvaluationError("Invalid score ({}) returned. ".format(total_score))
+        raise EvaluationError(f"Invalid score ({total_score}) returned. ")
 
 
 def eval(submit_file):
@@ -322,15 +341,15 @@ def eval(submit_file):
             with zipfile.ZipFile(submit_file) as src_f:
                 src_f.extractall(path=tmp_dir)
                 items = os.listdir(tmp_dir)
-                if 1 == len(items):
+                if len(items) == 1:
                     tmp_dir = os.path.join(tmp_dir, items[0])
                     items = os.listdir(tmp_dir)
-                if 0 == len(items):
+                if len(items) == 0:
                     raise Exception("Zip file is empty! ")
                 return evaluate(tmp_dir)
     except Exception as error:
         submit_file = os.path.split(submit_file)[-1]
-        msg = "Err: {}! ({})".format(error, submit_file)
+        msg = f"Err: {error}! ({submit_file})"
         raise Exception(msg[:200])
 
 if __name__ == "__main__":

@@ -13,5 +13,5 @@ def prep_env():
         'remove_features': ['Day', 'Tmstamp','index']
     }
 
-    print("The experimental settings are: \n{}".format(str(settings)))
+    print(f"The experimental settings are: \n{settings}")
     return settings
