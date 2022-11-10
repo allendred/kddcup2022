@@ -44,11 +44,10 @@ class TestData(object):
         begin_pos = tid * self.total_size
         border1 = begin_pos
         border2 = begin_pos + self.total_size
-        if self.task == 'MS':
-            cols = self.df_data.columns[self.start_col:]
-            data = self.df_data[cols]
-        else:
-            raise Exception("Unsupported task type ({})! ".format(self.task))
+        if self.task != 'MS':
+            raise Exception(f"Unsupported task type ({self.task})! ")
+        cols = self.df_data.columns[self.start_col:]
+        data = self.df_data[cols]
         seq = data.values[border1:border2]
         df = self.df_raw[border1:border2]
         return seq, df

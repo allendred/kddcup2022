@@ -102,8 +102,8 @@ def forecast(settings):
     for i in settings['split_part']:
         index += i
         for part_num in range(4):
-            model_name = "model_" + str(part_num) + "_" + str(index)
-            gbm[model_name] = lgb.Booster(model_file=path_to_model + '/tree/' + model_name)
+            model_name = f"model_{str(part_num)}_{str(index)}"
+            gbm[model_name] = lgb.Booster(model_file=f'{path_to_model}/tree/{model_name}')
     for i in range(settings['capacity']):
         df = df_list[i][-1:]
         cols = [c for c in df.columns if c not in settings['remove_features']]
@@ -113,7 +113,7 @@ def forecast(settings):
         part_num = int(i/34)
         for time_len in settings['split_part']:
             index += time_len
-            model_name = "model_" + str(part_num) + "_" + str(index)
+            model_name = f"model_{part_num}_{str(index)}"
             res = gbm[model_name].predict(df, num_iteration=gbm[model_name].best_iteration)
             pred_list.extend([res] * time_len)
         pred = np.concatenate(pred_list)

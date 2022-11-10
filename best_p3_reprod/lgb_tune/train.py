@@ -28,6 +28,19 @@ if __name__ == "__main__":
                     "bagging_fraction": 0.6,
                     "feature_fraction": 0.05,
                 }
+            elif index in [36, 18]:
+                params = {
+                    'objective': 'regression',
+                    'verbose': -1,
+                    'metric': 'rmse',
+                    'learning_rate': 0.01,
+                    "device": "gpu",
+                    'num_leaves': 18,
+                    "random_state": 2022,
+                    "bagging_freq": 5,
+                    "bagging_fraction": 0.345,
+                    "feature_fraction": 0.179,
+                }
             elif index == 72:
                 params = {
                     'objective': 'regression',
@@ -40,32 +53,6 @@ if __name__ == "__main__":
                     "bagging_freq": 5,
                     "bagging_fraction": 0.2322,
                     "feature_fraction": 0.6150,
-                }
-            elif index == 36:
-                params = {
-                    'objective': 'regression',
-                    'verbose': -1,
-                    'metric': 'rmse',
-                    'learning_rate': 0.01,
-                    "device": "gpu",
-                    'num_leaves': 18,
-                    "random_state": 2022,
-                    "bagging_freq": 5,
-                    "bagging_fraction": 0.345,
-                    "feature_fraction": 0.179,
-                }
-            elif index == 18:
-                params = {
-                    'objective': 'regression',
-                    'verbose': -1,
-                    'metric': 'rmse',
-                    'learning_rate': 0.01,
-                    "device": "gpu",
-                    'num_leaves': 18,
-                    "random_state": 2022,
-                    "bagging_freq": 5,
-                    "bagging_fraction": 0.345,
-                    "feature_fraction": 0.179,
                 }
             elif index == 9:
                 params = {
@@ -89,8 +76,8 @@ if __name__ == "__main__":
                     "device": "gpu",
                 }
 
-            model_name = "model_" + str(part_num) + "_" + str(index)
-            label_name = 'target' + str(index)
+            model_name = f"model_{str(part_num)}_{str(index)}"
+            label_name = f'target{str(index)}'
             print(f"------------------train  {model_name}---------------------------")
             train_data = lgb.Dataset(x_train, label=y_train[label_name])
             valid_data = lgb.Dataset(x_val, label=y_val[label_name])
@@ -102,4 +89,4 @@ if __name__ == "__main__":
                             early_stopping_rounds=20,
                             keep_training_booster=True
                             )
-            gbm.save_model(path_to_model + '/tree/' + model_name)
+            gbm.save_model(f'{path_to_model}/tree/{model_name}')

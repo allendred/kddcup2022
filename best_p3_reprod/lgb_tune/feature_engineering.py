@@ -77,10 +77,7 @@ def get_test_data(settings):
     print(len(df))
     print("add features")
     df = add_features(df)
-    df_list = []
-    for i in range(settings['capacity']):
-        tid = i + 1
-        df_list.append(df[df.TurbID == tid][-288:])
+    df_list = [df[df.TurbID == i + 1][-288:] for i in range(settings['capacity'])]
     print("get test data finish")
     return df_list
 
@@ -117,10 +114,12 @@ def add_target(df, settings):
     for i in settings['split_part']:
         index += i
         print(i, index)
-        df['target' + str(index)] = df.groupby('TurbID')["Patv"].shift(-index)
-        df['target' + str(index)] = df.groupby('TurbID')['target' + str(index)].transform(
-            lambda x: x.rolling(i).mean())
-    df = df[~df['target' + str(index)].isnull()].reset_index()
+        df[f'target{str(index)}'] = df.groupby('TurbID')["Patv"].shift(-index)
+        df[f'target{str(index)}'] = df.groupby('TurbID')[
+            f'target{str(index)}'
+        ].transform(lambda x: x.rolling(i).mean())
+
+    df = df[~df[f'target{str(index)}'].isnull()].reset_index()
     print("adding targeting finish")
     return df
 
